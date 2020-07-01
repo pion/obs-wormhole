@@ -1,0 +1,62 @@
+<html>
+  <head>
+    <title> P2P Streaming from OBS </title>
+  </head>
+
+  <body>
+    <h3> OBS Wormhole SDP </h3>
+    <textarea id="remoteSessionDescription"> </textarea> <br/>
+    <button onclick="window.startSession()"> Start Session </button>
+
+    <h3> Browser SDP </h3>
+    <textarea id="localSessionDescription" readonly="true"></textarea>
+
+    <h3> Video </h3>
+    <div id="remoteVideos"></div>
+
+    <h3> Logs </h3>
+    <div id="div"></div>
+  </body>
+
+  <script>
+    let pc = new RTCPeerConnection()
+    let log = msg => {
+      document.getElementById('div').innerHTML += msg + '<br>'
+    }
+
+    pc.ontrack = function (event) {
+      var el = document.createElement(event.track.kind)
+      el.srcObject = event.streams[0]
+      el.autoplay = true
+      el.controls = true
+
+      document.getElementById('remoteVideos').appendChild(el)
+    }
+
+    pc.oniceconnectionstatechange = e => log(pc.iceConnectionState)
+    pc.onicecandidate = event => {
+      if (event.candidate === null) {
+        document.getElementById('localSessionDescription').value = btoa(JSON.stringify(pc.localDescription))
+      }
+    }
+
+    // Offer to receive 1 audio, and 1 video track
+    pc.addTransceiver('video', {'direction': 'sendrecv'})
+    pc.addTransceiver('audio', {'direction': 'sendrecv'})
+
+
+    window.startSession = () => {
+      let sd = document.getElementById('remoteSessionDescription').value
+      if (sd === '') {
+        return alert('Session Description must not be empty')
+      }
+
+      try {
+        pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(sd))))
+        pc.createAnswer().then(d => pc.setLocalDescription(d)).catch(log)
+      } catch (e) {
+        alert(e)
+      }
+    }
+  </script>
+</html>
