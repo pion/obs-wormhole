@@ -11,6 +11,7 @@ import (
 	"github.com/pion/webrtc/v3"
 	"github.com/pion/webrtc/v3/pkg/media"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	flvtag "github.com/yutopp/go-flv/tag"
 	"github.com/yutopp/go-rtmp"
 	rtmpmsg "github.com/yutopp/go-rtmp/message"
@@ -41,6 +42,7 @@ func StartServer(peerConnection *webrtc.PeerConnection, videoTrack, audioTrack *
 				ControlState: rtmp.StreamControlStateConfig{
 					DefaultBandwidthWindowSize: 6 * 1024 * 1024 / 8,
 				},
+				Logger: logrus.StandardLogger(),
 			}
 		},
 	})
@@ -53,6 +55,9 @@ type Handler struct {
 	rtmp.DefaultHandler
 	peerConnection         *webrtc.PeerConnection
 	videoTrack, audioTrack *webrtc.Track
+
+	sps []byte
+	pps []byte
 }
 
 func (h *Handler) OnServe(conn *rtmp.Conn) {
@@ -94,7 +99,15 @@ func (h *Handler) OnAudio(timestamp uint32, payload io.Reader) error {
 	})
 }
 
-const headerLengthField = 4
+const (
+	headerLengthField = 4
+	spsId             = 0x67
+	ppsId             = 0x68
+)
+
+func annexBPrefix() []byte {
+	return []byte{0x00, 0x00, 0x00, 0x01}
+}
 
 func (h *Handler) OnVideo(timestamp uint32, payload io.Reader) error {
 	var video flvtag.VideoData
@@ -107,19 +120,66 @@ func (h *Handler) OnVideo(timestamp uint32, payload io.Reader) error {
 		return err
 	}
 
+	hasSpsPps := false
 	outBuf := []byte{}
 	videoBuffer := data.Bytes()
-	for offset := 0; offset < len(videoBuffer); {
-		bufferLength := int(binary.BigEndian.Uint32(videoBuffer[offset : offset+headerLengthField]))
-		if offset+bufferLength >= len(videoBuffer) {
-			break
+	if video.AVCPacketType == flvtag.AVCPacketTypeNALU {
+		for offset := 0; offset < len(videoBuffer); {
+
+			bufferLength := int(binary.BigEndian.Uint32(videoBuffer[offset : offset+headerLengthField]))
+			if offset+bufferLength >= len(videoBuffer) {
+				break
+			}
+
+			offset += headerLengthField
+
+			if videoBuffer[offset] == spsId {
+				hasSpsPps = true
+				h.sps = append(annexBPrefix(), videoBuffer[offset:offset+bufferLength]...)
+			} else if videoBuffer[offset] == ppsId {
+				hasSpsPps = true
+				h.pps = append(annexBPrefix(), videoBuffer[offset:offset+bufferLength]...)
+			}
+
+			outBuf = append(outBuf, annexBPrefix()...)
+			outBuf = append(outBuf, videoBuffer[offset:offset+bufferLength]...)
+
+			offset += int(bufferLength)
+
 		}
+	} else if video.AVCPacketType == flvtag.AVCPacketTypeSequenceHeader {
+		const spsCountOffset = 5
+		spsCount := videoBuffer[spsCountOffset] & 0x1F
+		offset := 6
+		h.sps = []byte{}
+		for i := 0; i < int(spsCount); i++ {
+			spsLen := binary.BigEndian.Uint16(videoBuffer[offset : offset+2])
+			offset += 2
+			if videoBuffer[offset] != spsId {
+				panic("Failed to parse SPS")
+			}
+			h.sps = append(h.sps, annexBPrefix()...)
+			h.sps = append(h.sps, videoBuffer[offset:offset+int(spsLen)]...)
+			offset += int(spsLen)
+		}
+		ppsCount := videoBuffer[offset]
+		offset++
+		for i := 0; i < int(ppsCount); i++ {
+			ppsLen := binary.BigEndian.Uint16(videoBuffer[offset : offset+2])
+			offset += 2
+			if videoBuffer[offset] != ppsId {
+				panic("Failed to parse PPS")
+			}
+			h.sps = append(h.sps, annexBPrefix()...)
+			h.sps = append(h.sps, videoBuffer[offset:offset+int(ppsLen)]...)
+			offset += int(ppsLen)
+		}
+		return nil
+	}
 
-		offset += headerLengthField
-		outBuf = append(outBuf, []byte{0x00, 0x00, 0x00, 0x01}...)
-		outBuf = append(outBuf, videoBuffer[offset:offset+bufferLength]...)
-
-		offset += int(bufferLength)
+	// We have an unadorned keyframe, append SPS/PPS
+	if video.FrameType == flvtag.FrameTypeKeyFrame && !hasSpsPps {
+		outBuf = append(append(h.sps, h.pps...), outBuf...)
 	}
 
 	return h.videoTrack.WriteSample(media.Sample{
