@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"log"
 	"math/rand"
 
 	"fyne.io/fyne"
@@ -13,13 +12,19 @@ import (
 	"github.com/yutopp/go-rtmp"
 )
 
+const (
+	StatusNew          = "Status: New"
+	StatusConnecting   = "Status: Connecting"
+	StatusConnected    = "Status: Connected"
+	StatusDisconnected = "Status: Disconnected"
+)
+
 type SignalingPageContext struct {
 	IsOffer bool
 }
 
 type SignalingPage struct {
 	fyne.Widget
-	statusChan     chan webrtc.ICEConnectionState
 	rtmpServer     *rtmp.Server
 	peerConnection *webrtc.PeerConnection
 }
@@ -42,15 +47,19 @@ func NewSignalingPage(navigator Navigator, ctx SignalingPageContext) (Page, erro
 	peerConnection, videoTrack, audioTrack := createPeerConnection()
 	rtmpServer := inRtmp.StartServer(peerConnection, videoTrack, audioTrack)
 
-	statusChan := make(chan webrtc.ICEConnectionState, 1)
+	statusLabel := widget.NewLabelWithStyle(StatusNew, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	peerConnection.OnICEConnectionStateChange(func(status webrtc.ICEConnectionState) {
-		log.Println(status)
-		select {
-		case statusChan <- status:
-		default:
-			// in case of slow reader, just throw away the state.
-			// Since it's a buffered channel, there should be always an initial state for the UI
-			<-statusChan
+		switch status {
+		case webrtc.ICEConnectionStateChecking:
+			statusLabel.SetText(StatusConnecting)
+		case webrtc.ICEConnectionStateConnected:
+			statusLabel.SetText(StatusConnected)
+		case webrtc.ICEConnectionStateClosed:
+			fallthrough
+		case webrtc.ICEConnectionStateDisconnected:
+			fallthrough
+		case webrtc.ICEConnectionStateFailed:
+			statusLabel.SetText(StatusDisconnected)
 		}
 	})
 
@@ -74,14 +83,15 @@ func NewSignalingPage(navigator Navigator, ctx SignalingPageContext) (Page, erro
 			panicIfErr(err)
 
 			peerConnection.SetLocalDescription(answer)
+			raw, err := json.Marshal(peerConnection.LocalDescription())
+			panicIfErr(err)
+			localSDPInput.SetText(base64.StdEncoding.EncodeToString(raw))
+			form.Open(0)
 		}
-
-		navigator.Push(RouteStatus, StatusPageContext{
-			StatusChan: statusChan,
-		})
+		form.Close(1)
 	})
 
-	backButton := widget.NewButton("Back", func() {
+	disconnectButton := widget.NewButton("Disconnect", func() {
 		navigator.Reset()
 	})
 
@@ -96,24 +106,26 @@ func NewSignalingPage(navigator Navigator, ctx SignalingPageContext) (Page, erro
 		raw, err := json.Marshal(peerConnection.LocalDescription())
 		panicIfErr(err)
 		localSDPInput.SetText(base64.StdEncoding.EncodeToString(raw))
+		form.Open(0)
+	} else {
+		form.Open(1)
 	}
 
 	content := widget.NewScrollContainer(widget.NewVBox(
 		form,
 		submitButton,
-		backButton,
+		disconnectButton,
+		statusLabel,
 		errLabel,
 	))
 	return &SignalingPage{
 		Widget:         content,
-		statusChan:     statusChan,
 		peerConnection: peerConnection,
 		rtmpServer:     rtmpServer,
 	}, nil
 }
 
 func (page *SignalingPage) BeforeDestroy() {
-	close(page.statusChan)
 	page.rtmpServer.Close()
 	page.peerConnection.Close()
 }

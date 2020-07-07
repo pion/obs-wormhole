@@ -21,10 +21,6 @@ func main() {
 		return NewSignalingPage(navigator, ctx.(SignalingPageContext))
 	})
 
-	cfg.Route(RouteStatus, func(navigator Navigator, ctx interface{}) (Page, error) {
-		return NewStatusPage(navigator, ctx.(StatusPageContext))
-	})
-
 	cfg.InitialPath(RouteHome)
 
 	myApp := app.New()
