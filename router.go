@@ -12,6 +12,7 @@ import (
 type Navigator interface {
 	Push(path string, ctx interface{}) error
 	Pop() error
+	Reset()
 }
 
 type Page interface {
@@ -129,4 +130,9 @@ func (router *Router) Pop() error {
 	router.history = router.history[:len(router.history)-1]
 	router.Refresh()
 	return nil
+}
+
+func (router *Router) Reset() {
+	for router.Pop() == nil {
+	}
 }

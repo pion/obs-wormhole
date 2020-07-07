@@ -8,8 +8,9 @@ import (
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/widget"
-	"github.com/pion/obs-wormhole/internal/rtmp"
+	inRtmp "github.com/pion/obs-wormhole/internal/rtmp"
 	"github.com/pion/webrtc/v3"
+	"github.com/yutopp/go-rtmp"
 )
 
 type SignalingPageContext struct {
@@ -18,7 +19,9 @@ type SignalingPageContext struct {
 
 type SignalingPage struct {
 	fyne.Widget
-	statusChan chan webrtc.ICEConnectionState
+	statusChan     chan webrtc.ICEConnectionState
+	rtmpServer     *rtmp.Server
+	peerConnection *webrtc.PeerConnection
 }
 
 func NewSignalingPage(navigator Navigator, ctx SignalingPageContext) (Page, error) {
@@ -37,8 +40,7 @@ func NewSignalingPage(navigator Navigator, ctx SignalingPageContext) (Page, erro
 	errLabel := widget.NewLabel("")
 
 	peerConnection, videoTrack, audioTrack := createPeerConnection()
-	// TODO: close rtmp server in before destroy
-	go rtmp.StartServer(peerConnection, videoTrack, audioTrack)
+	rtmpServer := inRtmp.StartServer(peerConnection, videoTrack, audioTrack)
 
 	statusChan := make(chan webrtc.ICEConnectionState, 1)
 	peerConnection.OnICEConnectionStateChange(func(status webrtc.ICEConnectionState) {
@@ -79,6 +81,10 @@ func NewSignalingPage(navigator Navigator, ctx SignalingPageContext) (Page, erro
 		})
 	})
 
+	backButton := widget.NewButton("Back", func() {
+		navigator.Reset()
+	})
+
 	if ctx.IsOffer {
 		offer, err := peerConnection.CreateOffer(nil)
 		panicIfErr(err)
@@ -95,13 +101,21 @@ func NewSignalingPage(navigator Navigator, ctx SignalingPageContext) (Page, erro
 	content := widget.NewScrollContainer(widget.NewVBox(
 		form,
 		submitButton,
+		backButton,
 		errLabel,
 	))
-	return &SignalingPage{content, statusChan}, nil
+	return &SignalingPage{
+		Widget:         content,
+		statusChan:     statusChan,
+		peerConnection: peerConnection,
+		rtmpServer:     rtmpServer,
+	}, nil
 }
 
 func (page *SignalingPage) BeforeDestroy() {
 	close(page.statusChan)
+	page.rtmpServer.Close()
+	page.peerConnection.Close()
 }
 
 func createPeerConnection() (*webrtc.PeerConnection, *webrtc.Track, *webrtc.Track) {
