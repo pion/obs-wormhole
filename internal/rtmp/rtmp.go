@@ -17,7 +17,7 @@ import (
 	rtmpmsg "github.com/yutopp/go-rtmp/message"
 )
 
-func StartServer(peerConnection *webrtc.PeerConnection, videoTrack, audioTrack *webrtc.Track) {
+func StartServer(peerConnection *webrtc.PeerConnection, videoTrack, audioTrack *webrtc.Track) *rtmp.Server {
 	log.Println("Starting RTMP Server")
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", ":1935")
@@ -46,9 +46,15 @@ func StartServer(peerConnection *webrtc.PeerConnection, videoTrack, audioTrack *
 			}
 		},
 	})
-	if err := srv.Serve(listener); err != nil {
-		log.Panicf("Failed: %+v", err)
-	}
+
+	go func() {
+		err := srv.Serve(listener)
+		if err != nil && err != rtmp.ErrClosed {
+			log.Panicf("Failed: %+v", err)
+		}
+	}()
+
+	return srv
 }
 
 type Handler struct {
