@@ -17,7 +17,7 @@ import (
 	rtmpmsg "github.com/yutopp/go-rtmp/message"
 )
 
-func StartServer(peerConnection *webrtc.PeerConnection, videoTrack, audioTrack *webrtc.Track) *rtmp.Server {
+func StartServer(peerConnection *webrtc.PeerConnection, videoTrack, audioTrack *webrtc.TrackLocalStaticSample) *rtmp.Server {
 	log.Println("Starting RTMP Server")
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", ":1935")
@@ -60,7 +60,7 @@ func StartServer(peerConnection *webrtc.PeerConnection, videoTrack, audioTrack *
 type Handler struct {
 	rtmp.DefaultHandler
 	peerConnection         *webrtc.PeerConnection
-	videoTrack, audioTrack *webrtc.Track
+	videoTrack, audioTrack *webrtc.TrackLocalStaticSample
 
 	sps []byte
 	pps []byte
@@ -100,8 +100,8 @@ func (h *Handler) OnAudio(timestamp uint32, payload io.Reader) error {
 	}
 
 	return h.audioTrack.WriteSample(media.Sample{
-		Data:    data.Bytes(),
-		Samples: media.NSamples(20*time.Millisecond, 48000),
+		Data:     data.Bytes(),
+		Duration: 20 * time.Millisecond,
 	})
 }
 
@@ -189,8 +189,8 @@ func (h *Handler) OnVideo(timestamp uint32, payload io.Reader) error {
 	}
 
 	return h.videoTrack.WriteSample(media.Sample{
-		Data:    outBuf,
-		Samples: media.NSamples(time.Second/30, 90000),
+		Data:     outBuf,
+		Duration: time.Second / 30,
 	})
 }
 
