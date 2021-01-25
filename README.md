@@ -17,13 +17,19 @@
 * Send your stream directly into another OBS instance. Making easy remote collaboration possible.
 
 ## Installing
-TODO
+
+Install go on your system than run
+
+git clone https://github.com/pion/obs-wormhole.git
+cd obs-wormhole/
+go build
 
 ## Using
-TODO
+./obs-wormhole
+
 
 ## Uninstalling
-TODO
+rm -r obs-wormhole/
 
 ### Community
 Pion has an active community on the [Slack](https://pion.ly/slack).
