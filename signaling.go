@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"math/rand"
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/widget"
@@ -130,14 +129,21 @@ func (page *SignalingPage) BeforeDestroy() {
 	page.peerConnection.Close()
 }
 
-func createPeerConnection() (*webrtc.PeerConnection, *webrtc.Track, *webrtc.Track) {
+func createPeerConnection() (*webrtc.PeerConnection, *webrtc.TrackLocalStaticSample, *webrtc.TrackLocalStaticSample) {
 	// Only support PCMA + H264
 	m := webrtc.MediaEngine{}
-	m.RegisterCodec(webrtc.NewRTPH264Codec(webrtc.DefaultPayloadTypeH264, 90000))
-	m.RegisterCodec(webrtc.NewRTPPCMACodec(webrtc.DefaultPayloadTypePCMA, 8000))
+	err := m.RegisterCodec(webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264, ClockRate: 90000, Channels: 0, SDPFmtpLine: "", RTCPFeedback: nil},
+	}, webrtc.RTPCodecTypeVideo)
+	panicIfErr(err)
+	err = m.RegisterCodec(webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypePCMA, ClockRate: 8000, Channels: 0, SDPFmtpLine: "", RTCPFeedback: nil},
+	}, webrtc.RTPCodecTypeAudio)
+
+	panicIfErr(err)
 
 	// Create a PeerConnection
-	peerConnection, err := webrtc.NewAPI(webrtc.WithMediaEngine(m)).NewPeerConnection(webrtc.Configuration{
+	peerConnection, err := webrtc.NewAPI(webrtc.WithMediaEngine(&m)).NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
 				URLs: []string{"stun:stun.l.google.com:19302"},
@@ -146,13 +152,13 @@ func createPeerConnection() (*webrtc.PeerConnection, *webrtc.Track, *webrtc.Trac
 	})
 	panicIfErr(err)
 
-	videoTrack, err := peerConnection.NewTrack(webrtc.DefaultPayloadTypeH264, rand.Uint32(), "video", "pion")
+	videoTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264}, "video", "pion")
 	panicIfErr(err)
 
 	_, err = peerConnection.AddTrack(videoTrack)
 	panicIfErr(err)
 
-	audioTrack, err := peerConnection.NewTrack(webrtc.DefaultPayloadTypePCMA, rand.Uint32(), "audio", "pion")
+	audioTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypePCMA}, "audio", "pion")
 	panicIfErr(err)
 
 	_, err = peerConnection.AddTrack(audioTrack)
