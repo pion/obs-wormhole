@@ -134,10 +134,12 @@ func createPeerConnection() (*webrtc.PeerConnection, *webrtc.TrackLocalStaticSam
 	m := webrtc.MediaEngine{}
 	err := m.RegisterCodec(webrtc.RTPCodecParameters{
 		RTPCodecCapability: webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264, ClockRate: 90000, Channels: 0, SDPFmtpLine: "", RTCPFeedback: nil},
+		PayloadType:        102,
 	}, webrtc.RTPCodecTypeVideo)
 	panicIfErr(err)
 	err = m.RegisterCodec(webrtc.RTPCodecParameters{
 		RTPCodecCapability: webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypePCMA, ClockRate: 8000, Channels: 0, SDPFmtpLine: "", RTCPFeedback: nil},
+		PayloadType:        8,
 	}, webrtc.RTPCodecTypeAudio)
 
 	panicIfErr(err)
