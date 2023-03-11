@@ -1,5 +1,9 @@
-# OBS Wormhole 🌌
-
+<h1 align="center">
+  <br>
+  OBS Wormhole 🌌
+  <br>
+</h1>
+<h4 align="center">Go implementation of the <a href="https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices">MediaDevices</a> API</h4>
 <p align="center">
   <a href="https://pion.ly"><img src="https://img.shields.io/badge/pion-webrtc-gray.svg?longCache=true&colorB=brightgreen" alt="OBS Wormhole"></a>
   <a href="https://pion.ly/slack"><img src="https://img.shields.io/badge/join-us%20on%20slack-gray.svg?longCache=true&logo=slack&colorB=brightgreen" alt="Slack Widget"></a>
