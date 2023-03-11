@@ -6,7 +6,7 @@
   <a href="https://twitter.com/_pion?ref_src=twsrc%5Etfw"><img src="https://img.shields.io/twitter/url.svg?label=Follow%20%40_pion&style=social&url=https%3A%2F%2Ftwitter.com%2F_pion" alt="Twitter Widget"></a>
   <a href="https://github.com/pion/awesome-pion" alt="Awesome Pion"><img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg"></a>
   <br>
-  <a href="https://travis-ci.org/pion/obs-wormhole"><img src="https://travis-ci.org/pion/obs-wormhole.svg?branch=master" alt="Build Status"></a>
+  <a href="https://pkg.go.dev/github.com/pion/obs-wormhole"><img src="https://pkg.go.dev/badge/github.com/pion/obs-wormhole.svg" alt="Go Reference"></a>
   <a href="https://codecov.io/gh/pion/obs-wormhole"><img src="https://codecov.io/gh/pion/obs-wormhole/branch/master/graph/badge.svg" alt="Coverage Status"></a>
   <a href="https://goreportcard.com/report/github.com/pion/obs-wormhole"><img src="https://goreportcard.com/badge/github.com/pion/obs-wormhole" alt="Go Report Card"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
