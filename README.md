@@ -20,21 +20,26 @@
 * Stream P2P directly to a users browser! No servers, 3rd party services or public IP required.
 * Send your stream directly into another OBS instance. Making easy remote collaboration possible.
 
-## Installing
+### Installing
+Install go on your system than run:
 
-Install go on your system than run
-
+```bash
 git clone https://github.com/pion/obs-wormhole.git
 cd obs-wormhole/
 go build
+```
 
-## Using
+### Using
+```bash
 ./obs-wormhole
+```
 
-## Uninstalling
+### Uninstalling
+```bash
 rm -r obs-wormhole/
+```
 
-## Community
+### Community
 Pion has an active community on the [Slack](https://pion.ly/slack).
 
 Follow the [Pion Twitter](https://twitter.com/_pion) for project updates and important WebRTC news.
@@ -42,8 +47,8 @@ Follow the [Pion Twitter](https://twitter.com/_pion) for project updates and imp
 We are always looking to support **your projects**. Please reach out if you have something to build!
 If you need commercial support or don't want to use public methods you can contact us at [team@pion.ly](mailto:team@pion.ly)
 
-## Contributing
-Check out the **[contributing wiki](https://github.com/pion/webrtc/wiki/Contributing)** to join the group of amazing people making this project possible: [AUTHORS.txt](./AUTHORS.txt)
+### Contributing
+Check out the [contributing wiki](https://github.com/pion/webrtc/wiki/Contributing) to join the group of amazing people making this project possible: [AUTHORS.txt](./AUTHORS.txt)
 
-## License
+### License
 MIT License - see [LICENSE](LICENSE) for full text
