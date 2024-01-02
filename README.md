@@ -3,7 +3,6 @@
   OBS Wormhole 🌌
   <br>
 </h1>
-<h4 align="center">Go implementation of the <a href="https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices">MediaDevices</a> API</h4>
 <p align="center">
   <a href="https://pion.ly"><img src="https://img.shields.io/badge/pion-webrtc-gray.svg?longCache=true&colorB=brightgreen" alt="OBS Wormhole"></a>
   <a href="https://pion.ly/slack"><img src="https://img.shields.io/badge/join-us%20on%20slack-gray.svg?longCache=true&logo=slack&colorB=brightgreen" alt="Slack Widget"></a>
@@ -20,24 +19,10 @@
 * Stream P2P directly to a users browser! No servers, 3rd party services or public IP required.
 * Send your stream directly into another OBS instance. Making easy remote collaboration possible.
 
-### Installing
-Install go on your system than run:
+### Deprecated
+You don't need to use OBS Wormhole anymore. WebRTC support has been added directly to OBS.
 
-```bash
-git clone https://github.com/pion/obs-wormhole.git
-cd obs-wormhole/
-go build
-```
-
-### Using
-```bash
-./obs-wormhole
-```
-
-### Uninstalling
-```bash
-rm -r obs-wormhole/
-```
+Check out [Broadcast Box](https://github.com/Glimesh/broadcast-box/) for docs and an introduction on how to use it.
 
 ### Community
 Pion has an active community on the [Slack](https://pion.ly/slack).
@@ -48,7 +33,7 @@ We are always looking to support **your projects**. Please reach out if you have
 If you need commercial support or don't want to use public methods you can contact us at [team@pion.ly](mailto:team@pion.ly)
 
 ### Contributing
-Check out the [contributing wiki](https://github.com/pion/webrtc/wiki/Contributing) to join the group of amazing people making this project possible: [AUTHORS.txt](./AUTHORS.txt)
+Check out the [contributing wiki](https://github.com/pion/webrtc/wiki/Contributing) to join the group of amazing people making this project possible
 
 ### License
 MIT License - see [LICENSE](LICENSE) for full text
